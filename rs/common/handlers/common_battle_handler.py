@@ -7,6 +7,7 @@ from rs.common.comparators.common_general_comparator import CommonGeneralCompara
 from rs.common.comparators.gremlin_nob_comparator import GremlinNobComparator
 from rs.common.comparators.three_sentry_comparator import ThreeSentriesComparator
 from rs.common.comparators.three_sentry_turn_1_comparator import ThreeSentriesTurn1Comparator
+from rs.common.comparators.time_eater_comparator import TimeEaterComparator
 from rs.common.comparators.transient_comparator import TransientComparator
 from rs.common.comparators.waiting_lagavulin_comparator import WaitingLagavulinComparator
 from rs.game.card import CardType
@@ -20,6 +21,7 @@ from rs.machine.state import GameState
 class BattleHandlerConfig:
     big_fight_floors: list[int] = field(default_factory=lambda: [33, 50])
     big_fight_comparator: ComparatorInterface = BigFightComparator
+    time_eater_comparator: ComparatorInterface = TimeEaterComparator
     gremlin_nob_comparator: ComparatorInterface = GremlinNobComparator
     three_sentries_comparator: ComparatorInterface = ThreeSentriesComparator
     three_sentries_turn_1_comparator: ComparatorInterface = ThreeSentriesTurn1Comparator
@@ -65,7 +67,11 @@ class CommonBattleHandler(Handler):
 
         transient_is_present = state.has_monster("Transient") and alive_monsters == 1
 
-        if big_fight:
+        time_eater_is_present = state.has_monster("Time Eater")
+
+        if time_eater_is_present:
+            return self.config.time_eater_comparator()
+        elif big_fight:
             return self.config.big_fight_comparator()
         elif gremlin_nob_is_present:
             return self.config.gremlin_nob_comparator()

@@ -270,6 +270,23 @@ def avoid_inconvenient_time_warp(best: CA, challenger: CA) -> Optional[bool]:
         else challenger.inconvenient_time_warp_count() < best.inconvenient_time_warp_count()
 
 
+def least_time_warp_risk(best: CA, challenger: CA) -> Optional[bool]:
+    """Prefer the path that ends the turn further away from a Time Warp trigger.
+
+    Unlike `avoid_inconvenient_time_warp` (binary, only true at 10/11) this is graded, so the
+    bot can reason about the 8/9 window before it is already too late.
+
+    Inert (returns None) whenever either side has no monster with the Time Warp power, which is
+    every fight except Time Eater. Never added to the shared `default_comparisons` list; only
+    the Time Eater comparator opts in, so no other battle's behaviour can change.
+    """
+    best_horizon = best.time_warp_horizon()
+    challenger_horizon = challenger.time_warp_horizon()
+    if best_horizon is None or challenger_horizon is None:
+        return None
+    return None if best_horizon == challenger_horizon else challenger_horizon > best_horizon
+
+
 def preserve_revive_options(best: CA, challenger: CA) -> Optional[bool]:
     return None if best.revive_option_count() == challenger.revive_option_count() \
         else challenger.revive_option_count() > best.revive_option_count()

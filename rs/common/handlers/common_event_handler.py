@@ -7,6 +7,88 @@ from rs.machine.handlers.handler import Handler
 from rs.machine.handlers.handler_action import HandlerAction
 from rs.machine.state import GameState
 
+# CommunicationMod reports the event's internal id as "Match and Keep!" while the Event enum
+# stores the display name "Match and Keep". `event_name` is localized, so it is NOT used for
+# recognition (it is "????" under a Chinese UI); only `event_id` is.
+# The id spelling is log-verified (e.g. 10H474B3AGLVI.log: event_id == "Match and Keep!").
+match_and_keep_event_ids = ("match and keep!",)
+
+# Cards we never want to draw from a "Match and Keep" screen.
+# NOTE: Normality is a CURSE, but Deep Breath is a SKILL, so a CardType.CURSE check alone is not
+# enough -- this list has to be explicit. Compared with any trailing '+' stripped.
+match_and_keep_unwanted_cards = (
+    "normality",
+    "deep breath",
+)
+
+
+def is_match_and_keep(state: GameState) -> bool:
+    """Recognize the Match and Keep event.
+
+    Deliberately does NOT read `event_name`: it is localized (English "Match and Keep!" vs
+    Chinese "????") and cannot identify this event reliably.
+    """
+    screen_state = state.screen_state()
+    event_id = str(screen_state.get("event_id", "") or "").strip().lower()
+    return event_id in match_and_keep_event_ids
+
+
+def match_and_keep_choice(
+    choice_list: list,
+    cards_desired_for_deck: dict | None = None,
+    deck_card_counts: dict | None = None,
+) -> int | None:
+    """Pick which card to take from the current Match and Keep screen.
+
+    Ranked by what the strategy already knows, so no card name has to be hard-coded:
+
+    1. A card the strategy wants and has not yet reached its desired count for. This reuses the
+       same `cards_desired_for_deck` / deck-count logic as `CommonCardRewardHandler`, so the
+       event agrees with card rewards about what is worth having.
+    2. A face-down 'cardN' placeholder. Unknown, so it can still turn out to be a wanted card.
+    3. A card known to not be wanted -- taken only when nothing unknown is left, since the
+       screen forces a choice.
+    4. A curse. Truly last resort, and only when the screen offers nothing else.
+    Returns None when there is no card entry at all (e.g. only 'leave'); the extra parameters
+    are optional so older callers keep working.
+    """
+    if cards_desired_for_deck is None:
+        cards_desired_for_deck = {}
+    if deck_card_counts is None:
+        deck_card_counts = {}
+
+    def normalize(choice) -> str:
+        # Same normalization as rs/machine/state.py get_choice_list(); kept identical on purpose.
+        return str(choice or "").strip().lower().replace("+", "")
+
+    desired_index = None
+    placeholder_index = None
+    unwanted_index = None  # known card the strategy does not want
+    curse_index = None  # only reached when nothing else remains on screen
+
+    for idx, choice in enumerate(choice_list):
+        name = normalize(choice)
+        if not name or name == "leave":
+            continue
+        if name in match_and_keep_unwanted_cards:
+            if curse_index is None:
+                curse_index = idx
+            continue
+        if unwanted_index is None:
+            unwanted_index = idx  # first known-but-not-wanted card: second worst
+        if name.startswith("card") and name[4:].isdigit():
+            if placeholder_index is None:
+                placeholder_index = idx
+            continue
+        if desired_index is None and deck_card_counts.get(name, 0) < cards_desired_for_deck.get(name, 0):
+            desired_index = idx
+
+    # A hidden slot remains exploratory; do not take an already revealed card first.
+    for candidate in (desired_index, placeholder_index, unwanted_index, curse_index):
+        if candidate is not None:
+            return candidate
+    return None
+
 
 class CommonEventHandler(Handler):
 
@@ -24,14 +106,28 @@ class CommonEventHandler(Handler):
                 return HandlerAction(commands=[p_delay, "choose 0", "wait 30"])
             return HandlerAction(commands=["choose 0", "wait 30"])
 
-        if self.find_event_choice(state):  # Otherwise figure out what to do below!
+        # Resolve once: event decisions can inspect and normalize the full state.
+        choice = self.find_event_choice(state)
+        if choice:
             if presentation_mode or slow_events:
-                return HandlerAction(commands=[p_delay, self.find_event_choice(state), p_delay_s])
-            return HandlerAction(commands=[self.find_event_choice(state), "wait 30"])
+                return HandlerAction(commands=[p_delay, choice, p_delay_s])
+            return HandlerAction(commands=[choice, "wait 30"])
 
     def find_event_choice(self, state: GameState) -> str:
         hp_per = state.get_player_health_percentage() * 100
         event = state.get_event()
+
+        # Matched before the `match` below: `event_name` is localized and cannot be trusted,
+        # so Match and Keep is recognized via the language-independent event_id / choice_list.
+        if is_match_and_keep(state):
+            choice = match_and_keep_choice(
+                state.get_choice_list(),
+                cards_desired_for_deck=self.cards_desired_for_deck,
+                deck_card_counts=state.get_deck_card_list_by_name_with_upgrade_stripped(),
+            )
+            if choice is not None:
+                return "choose " + str(choice)
+            return None
 
         match event:
 

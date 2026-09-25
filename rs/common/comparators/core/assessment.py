@@ -267,6 +267,18 @@ class ComparatorAssessment:
 
         return self.__get_value('nitwc', lambda: bad_time_warp)
 
+    def time_warp_horizon(self) -> int | None:
+        """How many card plays are left before Time Warp triggers (it fires on the 12th).
+
+        Returns None when no monster carries the power, so callers outside Time Eater
+        fights cannot be affected by this value at all.
+        """
+        horizons = [12 - m.powers[PowerId.TIME_WARP] for m in self.state.monsters
+                    if PowerId.TIME_WARP in m.powers]
+        if not horizons:
+            return self.__get_value('twh', lambda: None)
+        return self.__get_value('twh', lambda: max(0, min(horizons)))
+
     def revive_option_count(self) -> int:
         fairy_count = 0
         lizard_count = 0

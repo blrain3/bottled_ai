@@ -1,3 +1,4 @@
+import os
 import time
 import traceback
 
@@ -15,7 +16,15 @@ from rs.helper.logger import log, init_log, log_new_run_sequence
 run_seeds = [
     #'LGZ12EEMFGUK',
 ]
-run_amount = 1
+# EXPERIMENT: back-to-back runs. CommunicationMod keeps the game process alive across runs,
+# so Game Over -> proceed -> start <char> is enough to line the next run up in theory. This is
+# NOT verified yet; enable with RUN_AMOUNT=N in the environment so the default (1) stays intact.
+# A bad value must not abort the batch before the first run: fall back to a single run.
+try:
+    run_amount = max(1, int(os.environ.get("RUN_AMOUNT", "1")))
+except (TypeError, ValueError):
+    run_amount = 1
+# run_amount = 3
 strategy = PEACEFUL_PUMMELING
 
 if __name__ == "__main__":
@@ -32,8 +41,18 @@ if __name__ == "__main__":
                 time.sleep(1)
         else:
             for i in range(run_amount):
-                game.start(make_random_seed())
-                game.run()
+                # A single run failing (bot stuck, unexpected screen) must not abort the
+                # batch: log it and move on to the next run, otherwise "auto next run"
+                # silently means "auto stop at the first problem".
+                try:
+                    game.start(make_random_seed())
+                    game.run()
+                except Exception:
+                    log("Exception in run " + str(i + 1) + " of " + str(run_amount))
+                    log(traceback.format_exc())
+                    # Re-create the game so the next run starts from a clean client.
+                    client = Client()
+                    game = Game(client, strategy)
                 time.sleep(1)
 
     except Exception as e:

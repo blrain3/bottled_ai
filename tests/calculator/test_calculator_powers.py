@@ -590,6 +590,28 @@ class CalculatorPowersTest(CalculatorTestFixture):
         self.see_enemy_lost_hp(play, 16)
         self.see_enemy_has_power(play, PowerId.TIME_WARP, 12)
 
+    def test_time_warp_does_not_reset_or_apply_strength_on_trigger(self):
+        # In the real game the 12th card triggers Time Warp: counter resets to 0, enemy gains +2
+        # Strength and heals. The sim currently only increments the counter and stops plays.
+        state = self.given_state(CardId.CLEAVE)
+        state.hand.append(get_card(CardId.CLEAVE))
+        state.monsters[0].powers[PowerId.TIME_WARP] = 11
+        state.monsters[0].powers[PowerId.STRENGTH] = 1
+        play = self.when_playing_the_whole_hand(state)
+        self.see_cards_played(play, 1)
+        self.see_enemy_has_power(play, PowerId.TIME_WARP, 12)
+        self.assertEqual(1, play.state.monsters[0].powers.get(PowerId.STRENGTH))
+
+    def test_time_warp_trigger_effects_are_not_applied_at_end_turn(self):
+        state = self.given_state(CardId.CLEAVE)
+        state.hand.append(get_card(CardId.CLEAVE))
+        state.monsters[0].powers[PowerId.TIME_WARP] = 11
+        state.monsters[0].powers[PowerId.STRENGTH] = 1
+        play = self.when_playing_the_whole_hand(state)
+        play.state.end_turn()
+        self.see_enemy_has_power(play, PowerId.TIME_WARP, 12)
+        self.assertEqual(1, play.state.monsters[0].powers.get(PowerId.STRENGTH))
+
     def test_poison_damages_and_decrements(self):
         state = self.given_state(CardId.WOUND)
         state.monsters[0].powers[PowerId.POISON] = 3
