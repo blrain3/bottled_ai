@@ -11,7 +11,7 @@ export XDG_RUNTIME_DIR=/run/user/1000
 fail(){ echo "GUARD-FAIL: $1"; exit 1; }
 if [ "${WATCHDOG_RECOVER:-}" != "1" ]; then mkdir -p $P/watchdog-state; echo 0 > $P/watchdog-state/recoveries; fi
 have=$(sha256sum "$CMJAR" | cut -c1-24)
-[ "$have" = "571a36463c4e52872341c405" ] || fail "CM jar sha=${have}（预期 571a36463c4e52872341c405）——可能被 Steam 回滚，先处理"
+[ "$have" = "d346ec5198d9fb26412afa08" ] || fail "CM jar sha=${have}（预期 d346ec5198d9fb26412afa08）——可能被 Steam 回滚，先处理"
 pgrep -f "bottled_ai/main.py" >/dev/null && fail "bot 残留"
 pgrep -f "ModTheSpire.jar" >/dev/null && fail "MTS 残留"
 pgrep -x steam >/dev/null || fail "Steam 未运行"
