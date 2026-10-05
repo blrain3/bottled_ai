@@ -8,4 +8,12 @@ sleep 6
 systemctl --user stop mts-ui 2>/dev/null
 systemctl --user stop heart-watch 2>/dev/null
 if [ "${1:-}" = "--all" ]; then systemctl --user stop stuck-watch 2>/dev/null; fi
-pgrep -f "ModTheSpire.jar" >/dev/null && echo "游戏仍在!" || echo "已停止 ✓"
+for g in $(pgrep -f "SlayTheSpire/jre/bin/java"); do kill -TERM $g 2>/dev/null; done
+sleep 5
+for g in $(pgrep -f "SlayTheSpire/jre/bin/java"); do kill -KILL $g 2>/dev/null; done
+sleep 2
+if pgrep -f "ModTheSpire.jar" >/dev/null || pgrep -f "SlayTheSpire/jre/bin/java" >/dev/null; then
+  echo "仍有残留进程!"
+else
+  echo "已停止 ✓"
+fi
