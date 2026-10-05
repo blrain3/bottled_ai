@@ -7,10 +7,10 @@
 一个跑《杀戮尖塔》(Slay the Spire) 的 bot（`bottled_ai`），通过 CommunicationMod 收发游戏状态。
 目标不是"写出漂亮的代码"，而是**让 bot 在 A1（Ascension 1）真的变强**，判断以实测为准。
 
-本副本是**研究副本**（非部署副本）：
-- 部署副本在 `E:/Game/Steam/steamapps/common/SlayTheSpire/bottled_ai`
+本副本在 Linux 迁移后同时承担运行职责（研究 + 运行同一副本）：
+- 运行方式：游戏目录中的符号链接 `bottled_ai` 直接指向本仓库（`~/projects/bottled_ai`），游戏侧日志/运行数据即来自本副本（旧 Windows 部署路径 `E:/Game/...` 已废弃）
 - 未 commit、未 PR；上游基线是 `7b47a87`
-- 你可以读部署副本的日志，但**不要修改部署副本**，除非用户明确说"部署"
+- 运行产物（logs/、runs/ 等）可以读；修改生产代码仍按下方红线流程走
 
 ## 1. 绝对红线（违反即任务失败）
 

@@ -12,7 +12,7 @@ from rs.machine.handlers.default_choose import DefaultChooseHandler
 from rs.machine.handlers.default_confirm import DefaultConfirmHandler
 from rs.machine.handlers.default_end import DefaultEndHandler
 from rs.machine.handlers.default_leave import DefaultLeaveHandler
-from rs.machine.handlers.default_play import DefaultPlayHandler
+from rs.common.handlers.common_battle_handler import CommonBattleHandler
 from rs.machine.handlers.default_shop import DefaultShopHandler
 from rs.machine.handlers.default_wait import DefaultWaitHandler
 from rs.machine.state import GameState
@@ -23,7 +23,7 @@ DEFAULT_GAME_HANDLERS = [
     DefaultShopHandler(),
     DefaultChooseHandler(),
     DefaultConfirmHandler(),
-    DefaultPlayHandler(),
+    CommonBattleHandler(),
     DefaultEndHandler(),
     DefaultCancelHandler(),
     DefaultWaitHandler(),
@@ -47,6 +47,8 @@ class Game:
         self.last_boss = ""
         start_message = f"start {self.strategy.character.value}"
         if seed:
+            # LOCAL EXPERIMENT: the second token is the ascension level; upstream hard-codes
+            # 0. Set to 13 for the high-ascension sample run. Restore to 0 afterwards.
             start_message += " 0 " + seed
         self.__send_setup_command(start_message)
         state_seed = get_seed_string(self.last_state.game_state()['seed'])
@@ -69,7 +71,7 @@ class Game:
             for handler in self.strategy.handlers + DEFAULT_GAME_HANDLERS:
                 if handler.can_handle(self.last_state):
                     log_to_run("Handler: " + str(handler))
-                    action = handler.handle(self.last_state)
+                    action = handler.handle(self.last_state, self.strategy.slay_heart)
                     if not action:
                         continue
                     if action.memory_book is not None:

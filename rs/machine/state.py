@@ -166,8 +166,12 @@ class GameState:
         return self.game_state()["map"]
 
     def has_monster(self, name: str) -> bool:
+        # NOTE (local fix): `name` is localized by the game (a non-English UI sends
+        # "???"), while `id` is the stable internal identifier ("TimeEater"). Match
+        # either, so callers passing a display name still work in English and callers
+        # passing an id work in every language. Callers should prefer the id.
         for monster in self.get_monsters():
-            if monster['name'] == name:
+            if monster.get('name') == name or monster.get('id') == name:
                 return True
         return False
 
@@ -209,3 +213,22 @@ class GameState:
         if event_name not in possible_events:
             return event_name
         return Event(event_name)
+
+
+    def get_act_4_keys(self):
+        # 碎心移植：返回已持有钥匙的首字母列表（r/e/s）
+        keys = []
+        if "keys" not in self.game_state():
+            return []
+        for key in self.game_state()["keys"]:
+            if self.game_state()["keys"].get(key):
+                keys.append(key[0])
+        return keys
+
+    def get_burning_elite_position(self):
+        # 碎心移植：绿钥匙所在燃烧精英节点的坐标（"x_y"）
+        burning_elite_position = 0
+        if 'emerald_key_node' in self.game_state()["screen_state"]:
+            be = self.game_state()["screen_state"]["emerald_key_node"]
+            burning_elite_position = str(be["x"]) + "_" + str(be["y"])
+        return burning_elite_position

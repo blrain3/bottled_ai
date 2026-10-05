@@ -5,6 +5,7 @@ from rs.calculator.interfaces.comparator_interface import ComparatorInterface
 from rs.common.comparators.big_fight_comparator import BigFightComparator
 from rs.common.comparators.common_general_comparator import CommonGeneralComparator
 from rs.common.comparators.gremlin_nob_comparator import GremlinNobComparator
+from rs.common.comparators.shield_and_spear_comparator import ShieldAndSpearComparator  # 碎心移植：矛先于盾
 from rs.common.comparators.three_sentry_comparator import ThreeSentriesComparator
 from rs.common.comparators.three_sentry_turn_1_comparator import ThreeSentriesTurn1Comparator
 from rs.common.comparators.time_eater_comparator import TimeEaterComparator
@@ -26,6 +27,8 @@ class BattleHandlerConfig:
     three_sentries_comparator: ComparatorInterface = ThreeSentriesComparator
     three_sentries_turn_1_comparator: ComparatorInterface = ThreeSentriesTurn1Comparator
     transient_comparator: ComparatorInterface = TransientComparator
+    shield_and_spear_comparator: ComparatorInterface = ShieldAndSpearComparator  # 碎心移植
+    heart_fight_comparator: ComparatorInterface = BigFightComparator  # 碎心移植：心脏战可覆盖（默认=big fight）
     waiting_lagavulin_comparator: ComparatorInterface = WaitingLagavulinComparator
     general_comparator: ComparatorInterface = CommonGeneralComparator
 
@@ -44,9 +47,14 @@ class CommonBattleHandler(Handler):
     def select_comparator(self, state: GameState) -> ComparatorInterface:
         alive_monsters = len(list(filter(lambda m: not m["is_gone"], state.get_monsters())))
 
-        big_fight = state.floor() in self.config.big_fight_floors
+        # 碎心移植：心脏战按 big fight 对待（id 口径，兼容本地化）。
+        # CorruptHeart = 游戏本体内部 id（desktop-1.0.jar 常量核验，2026-10-05）
+        corrupt_heart_is_present = state.has_monster("Corrupt Heart") or state.has_monster("CorruptHeart")
 
-        gremlin_nob_is_present = state.has_monster("Gremlin Nob")
+        big_fight = state.floor() in self.config.big_fight_floors \
+                    or corrupt_heart_is_present
+
+        gremlin_nob_is_present = state.has_monster("GremlinNob")
 
         three_sentries_are_alive_turn_1 = state.has_monster("Sentry") \
                                    and alive_monsters == 3 \
@@ -67,10 +75,17 @@ class CommonBattleHandler(Handler):
 
         transient_is_present = state.has_monster("Transient") and alive_monsters == 1
 
-        time_eater_is_present = state.has_monster("Time Eater")
+        time_eater_is_present = state.has_monster("TimeEater")
+
+        # 碎心移植：Spire Shield/Spear 战——盾还活着时用矛优先 comparator（id 口径；
+        # SpireShield/SpireSpear 经游戏本体核验，空格形态为显示名兜底）
+        spear_still_alive = (state.has_monster("Spire Shield") or state.has_monster("SpireShield")) \
+                            and alive_monsters == 2
 
         if time_eater_is_present:
             return self.config.time_eater_comparator()
+        elif corrupt_heart_is_present:
+            return self.config.heart_fight_comparator()
         elif big_fight:
             return self.config.big_fight_comparator()
         elif gremlin_nob_is_present:
@@ -83,9 +98,11 @@ class CommonBattleHandler(Handler):
             return self.config.waiting_lagavulin_comparator()
         elif transient_is_present:
             return self.config.transient_comparator()
+        elif spear_still_alive:
+            return self.config.shield_and_spear_comparator()
         return self.config.general_comparator()
 
-    def handle(self, state: GameState) -> HandlerAction:
+    def handle(self, state: GameState, slay_heart: bool = False) -> HandlerAction:
         actions = get_best_battle_action(state, self.select_comparator(state), self.max_path_count)
         if actions:
             return actions

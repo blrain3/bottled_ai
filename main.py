@@ -4,6 +4,7 @@ import traceback
 
 from rs.ai.claw_is_law.claw_is_law import CLAW_IS_LAW
 from rs.ai.peaceful_pummeling.peaceful_pummeling import PEACEFUL_PUMMELING
+from rs.ai.observant_heartslayer.observant_heartslayer import OBSERVANT_HEARTSLAYER  # 碎心模式（三钥匙 + act4）
 from rs.ai.pwnder_my_orbs.pwnder_my_orbs import PWNDER_MY_ORBS
 from rs.ai.requested_strike.requested_strike import REQUESTED_STRIKE
 from rs.ai.shivs_and_giggles.shivs_and_giggles import SHIVS_AND_GIGGLES
@@ -25,7 +26,8 @@ try:
 except (TypeError, ValueError):
     run_amount = 1
 # run_amount = 3
-strategy = PEACEFUL_PUMMELING
+# 碎心模式：把下一行换成 OBSERVANT_HEARTSLAYER（slay_heart=True，自动收集三钥匙并进入 act4）
+strategy = OBSERVANT_HEARTSLAYER  # 2026-10-05 碎心验证批次；回默认改回 PEACEFUL_PUMMELING
 
 if __name__ == "__main__":
     init_log()

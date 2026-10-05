@@ -99,7 +99,7 @@ class CommonEventHandler(Handler):
     def can_handle(self, state: GameState) -> bool:
         return state.screen_type() == ScreenType.EVENT.value and state.has_command(Command.CHOOSE)
 
-    def handle(self, state: GameState) -> HandlerAction:
+    def handle(self, state: GameState, slay_heart: bool = False) -> HandlerAction:
 
         if len(state.get_choice_list()) == 1:  # If there's just one option, take it.
             if presentation_mode or slow_events:

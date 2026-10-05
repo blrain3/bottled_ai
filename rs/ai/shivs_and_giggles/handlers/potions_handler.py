@@ -22,7 +22,7 @@ class PotionsBaseHandler(Handler):
         # must be implemented by children
         pass
 
-    def handle(self, state: GameState) -> HandlerAction:
+    def handle(self, state: GameState, slay_heart: bool) -> HandlerAction:
         pot = self.get_potions_to_play(state)[0]
         wait_command = "wait 30"
         if pot['requires_target']:
@@ -70,7 +70,7 @@ class PotionsEventFightHandler(PotionsBaseHandler):  # Treat most Event Fights l
             and state.combat_state() \
             and state.screen_type() == ScreenType.NONE.value \
             and state.game_state()['room_type'] == "EventRoom" \
-            and not state.has_monster("Fungi Beast") \
+            and not state.has_monster("FungiBeast") \
             and (hp_per <= 50 and state.combat_state()['turn'] == 1) \
             and self.get_potions_to_play(state)
 

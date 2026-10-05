@@ -1,7 +1,8 @@
 DESIRED_CARDS_FOR_DECK = {
     'blasphemy': 1,
     'talk to the hand': 3,
-    'rushdown': 1,
+    'rushdown': 2,  # 2026-10-05 社区笔记：引擎核心，改为 2（原 1）
+    'scrawl': 1,  # 2026-10-05 新增：一线过牌/启动（共识）
     'tantrum': 2,
     'battle hymn': 1,
     'mental fortress': 2,
@@ -14,8 +15,9 @@ DESIRED_CARDS_FOR_DECK = {
     'crush joints': 1,
     'fear no evil': 2,
     'empty fist': 1,
+    'empty mind': 1,  # 2026-10-05 新增：退平静 + 抽牌（共识 A 级）
     'reach heaven': 1,
-    'inner peace': 1,
+    'inner peace': 2,  # 2026-10-05 社区笔记：平静浓度，1->2
     'cut through fate': 1,
     'eruption': 1,
     'crescendo': 1,
@@ -26,7 +28,7 @@ DESIRED_CARDS_FOR_DECK = {
     'spirit shield': 1,
     'sands of time': 1,
     'ragnarok': 1,
-    'perseverance': 2,
+    'perseverance': 1,  # 2026-10-05 社区普遍低评，2->1（保留观察，未归零）
     'wheel kick': 1,
     'like water': 1,
     'apparition': 1,

@@ -8,12 +8,14 @@ class UpgradeHandler(CommonUpgradeHandler):
 
     def __init__(self):
         super().__init__(priorities=[
-            'apotheosis',
+            # 2026-10-05 调整：Eruption 永远第一敲（多来源逐字一致）
             'eruption',
+            'apotheosis',
             'blasphemy',
             'tantrum',
             'talk to the hand',
             'rushdown',
+            'scrawl',  # 2026-10-05 新增
             'crush joints',
             'flurry of blows',
             'cut_through_fate',
@@ -24,12 +26,12 @@ class UpgradeHandler(CommonUpgradeHandler):
             'vigilance',
             'ragnarok',
             'fear no evil',
-            'reach heaven',
             'lesson learned',
             'halt',
             'indignation',
             'empty body',
             'empty fist',
+            'empty mind',  # 2026-10-05 新增
             'battle hymn',
             'spirit shield',
             'deceive reality',

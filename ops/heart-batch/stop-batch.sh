@@ -1,0 +1,11 @@
+#!/bin/bash
+# 碎心批次安全停止：bot → 游戏 → units
+export XDG_RUNTIME_DIR=/run/user/1000
+pkill -TERM -f "bottled_ai/main.py" 2>/dev/null && echo "bot TERM" || echo "bot 已不在"
+sleep 3
+for p in $(pgrep -f "ModTheSpire.jar"); do kill -TERM $p 2>/dev/null; done
+sleep 6
+systemctl --user stop mts-ui 2>/dev/null
+systemctl --user stop heart-watch 2>/dev/null
+if [ "${1:-}" = "--all" ]; then systemctl --user stop stuck-watch 2>/dev/null; fi
+pgrep -f "ModTheSpire.jar" >/dev/null && echo "游戏仍在!" || echo "已停止 ✓"
